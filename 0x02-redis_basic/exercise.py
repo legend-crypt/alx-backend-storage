@@ -7,7 +7,7 @@ from typing import Union
 from functools import wraps
 
 
-def count_calls(func):
+def count_calls(method):
     """function decorator
 
     Args:
@@ -17,16 +17,39 @@ def count_calls(func):
         object: callable function
     """
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
+    @wraps(method)
+    def wrapper(self, *args):
         """function wrapper
 
         Returns:
             wrapper: the function wrapper
         """
-        redis_instance = args[0]
-        redis_instance._redis.incr(func.__qualname__)
-        return func(*args, **kwargs)
+        self._redis.incr(method.__qualname__)
+        return method(self, *args)
+
+    return wrapper
+
+
+def call_history(method):
+    """function decorator
+
+    Args:
+        func (function): the function to be wraped
+
+    Returns:
+        object: callable function
+    """
+
+    @wraps(method)
+    def wrapper(self, *args):
+        """function wrapper
+
+        Returns:
+            wrapper: the function wrapper
+        """
+        self._redis.rpush(f"{method.__qualname__}:inputs", str(args))
+        self._redis.rpush(f"{method.__qualname__}:outputs", str(method(self, *args)))
+        return method(self, *args)
 
     return wrapper
 
@@ -37,6 +60,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]):
         """stores an data to the redis cache
