@@ -3,6 +3,7 @@
 
 import redis
 from uuid import uuid4
+from typing import Union
 
 
 class Cache:
@@ -11,7 +12,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
-    def store(self, data: str | bytes | int | float):
+    def store(self, data: Union[str, bytes, int, float]):
         """stores an data to the redis cache
 
         Args:
