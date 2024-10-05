@@ -20,3 +20,26 @@ class Cache:
         key = str(uuid4())
         self._redis.set(name=key, value=data)
         return key
+
+    def get(self, key, fn=None):
+        """Convert the redis data retrieved to the desired format
+
+        Args:
+            key (str): the key to be retrieved
+            fn (function, optional): the function to convert the retrieved value to the desired format. Defaults to None.
+        """
+        data = self._redis.get(key)
+        if not data:
+            return None
+        if fn:
+            data = fn(data)
+            return data
+        return data
+
+    def get_str(self, key):
+        """Automatically parametrize get with the correct conversion function"""
+        return self.get(key=key, fn=str)
+
+    def get_int(self, key):
+        """Automatically parametrize get with the correct conversion function"""
+        return self.get(key=key, fn=int)
